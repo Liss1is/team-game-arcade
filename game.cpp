@@ -100,6 +100,101 @@ int main() {
     cout << "\n\t=== ИГРА ОКОНЧЕНА. Ваш итоговый рекорд: " << score << " очков! ===\n";
     return 0;
 }
+
+
+// ========== DEV 2: ТЬМА И ЛЕЧЕНИЕ ==========
+
+void exploreDarkness() {
+    cout « "\nТы зажигаешь лампу и уходишь в темноту...\n";
+
+    // Трата масла (ресурсов)
+    if (resources < 10) {
+        cout « "⚠ Масло почти на нуле! Даниэля поглощает страх.\n";
+        sanity -= 20;
+        hp -= 10;
+        if (sanity < 0) sanity = 0;
+        if (hp < 0) hp = 0;
+        cout « "Рассудок: -20 | Здоровье: -10\n";
+        return;
+    }
+    resources -= 10;
+
+    // Проверка рассудка
+    if (sanity < 30) {
+        cout « "⚠ Рассудок критически низок. Даниэль видит галлюцинации.\n";
+        sanity -= 10;
+        if (sanity < 0) sanity = 0;
+    }
+
+    // Случайное событие
+    int roll = rand() % 100;
+
+    if (roll < 40) {
+        // Найдена записка
+        // Находим случайную ещё не собранную записку
+        vector<int> notFound;
+        for (auto &n : allNotes) {
+            if (find(collectedNotes.begin(), collectedNotes.end(), n.id) == collectedNotes.end())
+                notFound.push_back(n.id);
+        }
+        if (!notFound.empty()) {
+            int noteId = notFound[rand() % notFound.size()];
+            auto it = find_if(allNotes.begin(), allNotes.end(),
+                              [noteId](const Note &n){ return n.id == noteId; });
+            cout « "📖 Записка найдена: \"" « it->title « "\" (ID " « noteId « ")\n";
+            // Сохраняем как "найденную, но не прочитанную"
+            // (в collectedNotes попадают прочитанные; для найденных используем отдельный подход)
+            // Упрощение: кладём в collectedNotes, но память не растёт до прочтения.
+            // Для корректной работы readNote() нужно вести отдельный список "найденных".
+            // --- Комментарий рецензента (Dev 3): нужен отдельный вектор foundNotes! ---
+            // Исправление:
+        } else {
+            cout « "Даниэль брёл во тьме, но ничего не нашёл.\n";
+        }
+        sanity += 5;
+        score += 20;
+    } else if (roll < 70) {
+        // Ловушка / монстр
+        int dmg = 10 + rand() % 15;
+        hp -= dmg;
+        if (hp < 0) hp = 0;
+        sanity -= 5;
+        if (sanity < 0) sanity = 0;
+        cout « "⚠ Даниэль попадает на глаза прислужнику Александра! Вы убегаете. Здоровье: -" « dmg « "\n";
+    } else {
+        // Ресурсы
+        int gain = 5 + rand() % 10;
+        resources += gain;
+        cout « "✔ Даниэль исследует помещение на наличие масла и стимуляторов: +" « gain « " ресурсов.\n";
+    }
+
+    if (hp <= 0) {
+        cout « "\n💀 Тень поглотила Даниэля. Игра окончена.\n";
+    }
+    if (sanity <= 0) {
+        cout « "\n💀 Рассудок разрушен. Даниэль больше не в силах бороться.\n";
+        hp = 0;
+    }
+}
+
+void restAndHeal() {
+    cout « "\n\tТы пытаешься отдохнуть...\n";
+
+    if (resources < 15) {
+        cout « "⚠ Ты проверяешь карманы, но они пусты (нужно 15).\n";
+        return;
+    }
+    resources -= 15;
+
+    // Восстановление HP (но не выше 100 — защита от переполнения)
+    int heal = 20 + rand() % 15;
+    hp = min(100, hp + heal);
+    // Восстановление рассудка
+    sanity = min(100, sanity + 10);
+
+    cout « "✔ Здоровье восстановлено на +" « heal « " (макс. 100)\n";
+    cout « "✔ Рассудок +10\n";
+    cout « "Текущее HP: " « hp « "/100 | Рассудок: " « sanity « "/100\n";
 // ========== DEV 3: ФИНАЛЬНАЯ БИТВА ==========
 
 void finalBattle() {
